@@ -1,0 +1,130 @@
+name: Build Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+    - master
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ${{ matrix.sys.os }}
+
+    env:
+      # As of 1.2.0b2 poetry tries to access the system Keyring for more actions than it did
+      # before. This causes problems on the Ubuntu CI - but not on Windows - for reasons that
+      # are unclear. (Backend installed but not running? System not capable of prompting a
+      # user to login to unlock the keychain as it's a CI system?)
+      #
+      # @see https://github.com/python-poetry/poetry/issues/1917
+      PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
+
+      # According to MSys2's list of known issues, setuptools >= 60.0 is not compatible with
+      # MSys2 (or vice-versa). Below is the recommended work-around.
+      #
+      # @see https://www.msys2.org/docs/python/#known-issues
+      SETUPTOOLS_USE_DISTUTILS: stdlib
+
+    defaults:
+      run:
+        shell: ${{ matrix.sys.shell }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        sys:
+        - os: windows-2019
+          shell: msys2 {0}
+        - os: ubuntu-latest
+          shell: bash
+
+    steps:
+
+    - name: Install and Configure Msys2
+      if: ${{ matrix.sys.os == 'windows-2019' }}
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.sys }}
+        update: true
+        install: >
+          git
+        pacboy: >
+          gcc:p
+          pkgconf:p
+          python-pip:p
+          rtmidi:p
+
+    - name: Update pip
+      run: |
+        python -m pip install -U pip
+
+    # poetry requires jsonschema which, as of jsonschema v4.18.0, requires rpds-py, which
+    # requires a rust compiler (unless rpds-py is installed from a wheel, and there isn't one
+    # provided for use with MSys2 on Windows).
+    #
+    # Besides the question of why one should need a rust compiler to build a python package,
+    # as this is only a build-time dependancy, we should be able to satisfy poetry's requirement
+    # by specifying a version, and hope that pip doesn't try to update it to a newer version.
+    - name: Pin jsonschema
+      if: ${{ matrix.sys.os == 'windows-2019' }}
+      run: |
+        pip install "jsonschema<4.18.0"
+
+    - name: Install Poetry via pip
+      run: |
+        pip install poetry==1.6.1
+        pip list | grep poetry
+
+    - name: Checkout source
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 1
+
+    # Without this, we get a series of "MaxRetryError" errors when rebuilding the lockfile on
+    # Windows, seemingly caused by not being able to verify certificates.
+    #
+    # The VM version of git appears to be configured to use a file that may assist with this,
+    # however attempting to tell the MSys2 version of git to use the exact same config fails
+    # with the same error.
+    #
+    # I suspect that this may be some fault or shortcoming in Dulwich, which is what poetry uses
+    # instead of querying the git client.
+    #
+    # We still need to install a version of git via MSys2, as a git client is needed to clone
+    # dependencies not available via pip, and the VM version of git can seemingly not be found
+    # when inside an MSys2 shell.
+    - name: Force system git client
+      if: ${{ matrix.sys.os == 'windows-2019' }}
+      run: |
+        poetry config experimental.system-git-client true
+
+    - name: Rebuild lockfile
+      run: |
+        poetry lock -vvv
+
+    - name: Print out lockfile
+      run: |
+        cat poetry.lock
+
+    - name: Build & Install via pip
+      run: |
+        pip install .
+
+    - name: Test run LiSP
+      run: |
+        cd ~
+        linux-show-player --help
+
+    - name: Build a wheel
+      id: wheel
+      run: |
+        pip wheel --no-deps .
+        echo "::set-output name=filename::`ls *.whl`"
+
+    - name: Upload wheel
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ steps.wheel.outputs.filename }}
+        path: ${{ steps.wheel.outputs.filename }}

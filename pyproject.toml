@@ -1,0 +1,12 @@
+[build-system]
+requires = ["poetry-core>=1.1.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "python-rtmidi-poetry-test"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+python-rtmidi = "^1.4"
+#{ git = "https://github.com/SpotlightKid/python-rtmidi.git", tag = "v1.4.9" }
