@@ -14,7 +14,8 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-python-rtmidi = { git = "https://github.com/SpotlightKid/python-rtmidi.git", tag = "1.5.6" }
+python-rtmidi = { git = "https://github.com/s0600204/python-rtmidi.git", branch = "msys2" }
+#{ git = "https://github.com/SpotlightKid/python-rtmidi.git", tag = "1.5.6" }
 
 [tool.poetry.scripts]
 rtmidi-poetry-test = "python_rtmidi_poetry_test.main:main"
