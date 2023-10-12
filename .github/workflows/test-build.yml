@@ -52,6 +52,7 @@ jobs:
           git
         pacboy: >
           gcc:p
+          ninja:p
           pkgconf:p
           python-pip:p
           rtmidi:p
@@ -76,6 +77,16 @@ jobs:
       run: |
         pip install poetry==1.6.1
         pip list | grep poetry
+
+    - name: List pip packages
+      run: |
+        pip list
+
+    - name: Explicitly Install ninja on Unbuntu
+      if: ${{ matrix.sys.os == 'ubuntu-latest' }}
+      run: |
+        pip install ninja
+        pip list | grep ninja
 
     - name: Checkout source
       uses: actions/checkout@v3
