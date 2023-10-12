@@ -8,7 +8,14 @@ version = "0.1.0"
 description = "Testing using python-rtmidi in poetry"
 authors = []
 
+packages = [
+    { include = "python_rtmidi_poetry_test" }
+]
+
 [tool.poetry.dependencies]
 python = "^3.8"
 python-rtmidi = "^1.4"
 #{ git = "https://github.com/SpotlightKid/python-rtmidi.git", tag = "v1.4.9" }
+
+[tool.poetry.scripts]
+rtmidi-poetry-test = "python_rtmidi_poetry_test.main:main"

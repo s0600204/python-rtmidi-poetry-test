@@ -112,10 +112,10 @@ jobs:
       run: |
         pip install .
 
-    - name: Test run LiSP
+    - name: Test run
       run: |
         cd ~
-        linux-show-player --help
+        rtmidi-poetry-test
 
     - name: Build a wheel
       id: wheel
