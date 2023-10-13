@@ -49,7 +49,7 @@ jobs:
     steps:
 
     - name: Install and Configure Msys2
-      if: ${{ matrix.sys.os == 'windows-2019' }}
+      if: ${{ startsWith(matrix.sys.os, 'windows') }}
       uses: msys2/setup-msys2@v2
       with:
         msystem: ucrt64
@@ -65,7 +65,7 @@ jobs:
 
     - name: Update pip
       run: |
-        python -m pip install -U pip
+        python3 -m pip install -U pip
 
     # poetry requires jsonschema which, as of jsonschema v4.18.0, requires rpds-py, which
     # requires a rust compiler (unless rpds-py is installed from a wheel, and there isn't one
@@ -75,24 +75,18 @@ jobs:
     # as this is only a build-time dependancy, we should be able to satisfy poetry's requirement
     # by specifying a version, and hope that pip doesn't try to update it to a newer version.
     - name: Pin jsonschema
-      if: ${{ matrix.sys.os == 'windows-2019' }}
+      if: ${{ startsWith(matrix.sys.os, 'windows') }}
       run: |
-        pip install "jsonschema<4.18.0"
+        pip3 install "jsonschema<4.18.0"
 
     - name: Install Poetry via pip
       run: |
-        pip install poetry==1.6.1
-        pip list | grep poetry
+        pip3 install poetry==1.6.1
+        pip3 list | grep poetry
 
     - name: List pip packages
       run: |
-        pip list
-
-    - name: Explicitly Install ninja on Unbuntu
-      if: ${{ matrix.sys.os == 'ubuntu-latest' }}
-      run: |
-        pip install ninja
-        pip list | grep ninja
+        pip3 list
 
     - name: Checkout source
       uses: actions/checkout@v3
@@ -113,7 +107,7 @@ jobs:
     # dependencies not available via pip, and the VM version of git can seemingly not be found
     # when inside an MSys2 shell.
     - name: Force system git client
-      if: ${{ matrix.sys.os == 'windows-2019' }}
+      if: ${{ startsWith(matrix.sys.os, 'windows') }}
       run: |
         poetry config experimental.system-git-client true
 
@@ -127,7 +121,7 @@ jobs:
 
     - name: Build & Install via pip
       run: |
-        pip install .
+        pip3 install .
 
     - name: Test run
       run: |
@@ -137,7 +131,7 @@ jobs:
     - name: Build a wheel
       id: wheel
       run: |
-        pip wheel --no-deps .
+        pip3 wheel --no-deps .
         echo "::set-output name=filename::`ls *.whl`"
 
     - name: Upload wheel
