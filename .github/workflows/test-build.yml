@@ -137,5 +137,5 @@ jobs:
     - name: Upload wheel
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ steps.wheel.outputs.filename }}
+        name: ${{ matrix.sys.os }}____${{ steps.wheel.outputs.filename }}
         path: ${{ steps.wheel.outputs.filename }}
