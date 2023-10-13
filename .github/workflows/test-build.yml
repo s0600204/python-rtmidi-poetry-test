@@ -132,10 +132,10 @@ jobs:
       id: wheel
       run: |
         pip3 wheel --no-deps .
-        echo "::set-output name=filename::`ls *.whl`"
+        echo "filename=`ls *.whl`" >> $GITHUB_OUTPUT
 
     - name: Upload wheel
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ steps.wheel.outputs.filename }}
         path: ${{ steps.wheel.outputs.filename }}
